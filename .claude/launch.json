@@ -4,7 +4,7 @@
     {
       "name": "static",
       "runtimeExecutable": "python3",
-      "runtimeArgs": ["-m", "http.server", "8765", "--bind", "127.0.0.1"],
+      "runtimeArgs": ["-m", "http.server", "8765", "--bind", "127.0.0.1", "--directory", "/Users/krammark191/Documents/Personal/Software Projects/runeforge"],
       "port": 8765
     }
   ]
