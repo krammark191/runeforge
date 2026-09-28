@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Runeforge — Valheim Character Editor</title>
+  <meta name="description" content="Edit a Valheim 1.0 character (.fch) in your browser: inventory, item quality beyond the Forge of Potential cap, and skills. Nothing is uploaded; cheat flags are never touched.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%230f0d0b'/%3E%3Cpath d='M16 4l3 8 8 3-8 3-3 8-3-8-8-3 8-3z' fill='%23d9a74a'/%3E%3C/svg%3E">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="#" id="brand">
+      <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M16 4l3 8 8 3-8 3-3 8-3-8-8-3 8-3z" fill="currentColor"/></svg>
+      RUNEFORGE
+    </a>
+    <div class="file-info" id="file-info" hidden>
+      <span class="mono" id="file-name"></span>
+      <span class="badge gold" id="badge-char"></span>
+      <span class="badge" id="badge-cheats"></span>
+      <span class="badge" id="badge-dirty" hidden><span class="dot"></span>unsaved</span>
+    </div>
+    <div class="spacer"></div>
+    <div class="status-line" id="editor-actions" hidden>
+      <button class="btn small ghost" id="btn-undo" title="Undo (Ctrl+Z)" disabled>↶ Undo</button>
+      <button class="btn small ghost" id="btn-redo" title="Redo (Ctrl+Shift+Z)" disabled>↷ Redo</button>
+      <button class="btn small" id="btn-close">Close</button>
+      <button class="btn small" id="btn-download">Download .fch</button>
+      <button class="btn small primary" id="btn-save" hidden>Save to folder</button>
+    </div>
+  </header>
+
+  <!-- ============ landing ============ -->
+  <main class="landing" id="landing">
+    <p class="eyebrow">Valheim 1.0 · Inventory, quality &amp; skills</p>
+    <h1>Valheim Character Editor</h1>
+    <p class="lede">Open a character file (.fch) to edit its inventory and skills in your browser. Raise item quality past the pre-Forge cap — the file never leaves your machine and the game's cheat flags are never written.</p>
+
+    <div class="dropzone" id="dropzone">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M12 11v6M9.5 13.5 12 11l2.5 2.5"/></svg>
+      <div><strong>Drop your .fch file here</strong></div>
+      <div class="or">OR</div>
+      <div class="actions">
+        <button class="btn primary" id="btn-choose">Choose file</button>
+        <button class="btn" id="btn-folder">Open character folder</button>
+        <button class="btn ghost" id="btn-demo">Try a demo character</button>
+      </div>
+      <p class="hint" id="folder-hint">Folder mode saves in place and writes a timestamped backup first (Chrome and Edge on desktop).</p>
+      <input type="file" id="file-input" accept=".fch" hidden>
+    </div>
+
+    <section id="folder-list" class="panel" hidden style="margin-top:14px">
+      <div class="panel-head"><h3>Characters in folder</h3><button class="btn small ghost" id="btn-folder-close">Close folder</button></div>
+      <div id="folder-files"></div>
+    </section>
+
+    <div class="cards">
+      <div class="card">
+        <h3>Where are my characters?</h3>
+        <p class="muted">Windows (Steam Cloud):</p>
+        <code>%USERPROFILE%\AppData\LocalLow\IronGate\Valheim\characters</code>
+        <p class="muted">Windows (local):</p>
+        <code>%USERPROFILE%\AppData\LocalLow\IronGate\Valheim\characters_local</code>
+        <p class="muted">Linux / Steam Deck:</p>
+        <code>~/.config/unity3d/IronGate/Valheim/characters</code>
+        <p class="muted">macOS:</p>
+        <code>~/Library/Application Support/unity.IronGate.Valheim/characters</code>
+      </div>
+      <div class="card">
+        <h3>Before you edit</h3>
+        <ul>
+          <li>Quit Valheim completely first, or the game will overwrite your changes on its next save.</li>
+          <li>Keep a copy of the original file. Folder mode makes a backup automatically.</li>
+          <li>Only the inventory and skills sections are rewritten. Every other byte is copied from the original.</li>
+          <li>With Steam Cloud, pick “keep local” if Steam reports a sync conflict afterwards.</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>About cheat flags</h3>
+        <ul>
+          <li>Valheim 1.0 stores a per-character <em>used cheats</em> flag and a per-item <em>cheated</em> mark. Either one blocks achievements.</li>
+          <li>This editor never sets either one. Editing quality, items or skills leaves them exactly as they were.</li>
+          <li>If a character already carries a flag, the <strong>Integrity</strong> tab can clear it on request.</li>
+          <li>Items you add are stamped as crafted by your character, the same way a normal crafting-table item is.</li>
+          <li>Whether a server accepts edited characters is up to that server.</li>
+        </ul>
+      </div>
+    </div>
+  </main>
+
+  <!-- ============ editor ============ -->
+  <main class="editor" id="editor" hidden>
+    <div id="editor-notices"></div>
+    <div class="tabs" role="tablist">
+      <button role="tab" data-tab="inventory" aria-selected="true">Inventory</button>
+      <button role="tab" data-tab="skills" aria-selected="false">Skills</button>
+      <button role="tab" data-tab="character" aria-selected="false">Character</button>
+      <button role="tab" data-tab="integrity" aria-selected="false">Integrity</button>
+    </div>
+
+    <!-- inventory -->
+    <section data-panel="inventory" class="split">
+      <div>
+        <div class="panel">
+          <div class="panel-head">
+            <h2>Inventory</h2>
+            <span class="muted" id="inv-meta"></span>
+          </div>
+          <div class="grid" id="inv-grid"></div>
+          <div class="legend">
+            <span><i style="background:var(--gold)"></i>quality</span>
+            <span><i style="background:var(--frost)"></i>quality beyond station max (Forge of Potential range)</span>
+            <span><i style="background:var(--ok)"></i>equipped</span>
+            <span><i style="background:var(--danger)"></i>marked as cheated by the game</span>
+          </div>
+          <p class="hint">Click a slot to edit it. Drag an item onto another slot to move or swap. Empty slots accept new items from the search below.</p>
+        </div>
+        <div class="panel">
+          <div class="panel-head"><h3>Add item</h3><span class="hint" id="add-target"></span></div>
+          <input type="search" id="item-search" placeholder="Search 1000+ items by name or prefab…" autocomplete="off">
+          <div class="results" id="item-results" hidden></div>
+        </div>
+      </div>
+      <aside class="panel" id="item-detail">
+        <p class="muted">Select an item to edit it.</p>
+      </aside>
+    </section>
+
+    <!-- skills -->
+    <section data-panel="skills" hidden>
+      <div class="panel">
+        <div class="panel-head"><h2>Skills</h2></div>
+        <div class="toolbar">
+          <label class="muted">Set all to</label>
+          <input type="number" id="skills-all" min="0" max="100" step="1" value="100" style="max-width:90px">
+          <button class="btn small" id="btn-skills-all">Apply</button>
+          <span class="spacer" style="flex:1"></span>
+          <select id="skill-add-select"></select>
+          <button class="btn small" id="btn-skill-add">Add skill</button>
+        </div>
+        <div class="skills" id="skills-list"></div>
+        <p class="hint">Skill levels are stored as floats; progression in game caps at 100. Values above 100 are accepted by the game but have no extra effect.</p>
+      </div>
+    </section>
+
+    <!-- character -->
+    <section data-panel="character" hidden>
+      <div class="split">
+        <div class="panel"><div class="panel-head"><h2>Character</h2></div><dl class="kv" id="char-kv"></dl></div>
+        <div class="panel"><div class="panel-head"><h3>Worlds</h3></div><div id="char-worlds"></div></div>
+      </div>
+    </section>
+
+    <!-- integrity -->
+    <section data-panel="integrity" hidden>
+      <div class="split">
+        <div>
+          <div class="panel">
+            <div class="panel-head"><h2>Integrity &amp; cheat state</h2></div>
+            <div id="integrity-body"></div>
+          </div>
+          <div class="panel">
+            <div class="panel-head"><h3>Items marked as cheated</h3></div>
+            <div id="integrity-items"></div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-head"><h3>What this editor guarantees</h3></div>
+          <ul class="muted" style="padding-left:18px">
+            <li>The <code>usedCheats</code> flag is copied from the original unchanged unless you press <em>Clear flag</em>. It can never be set by this editor.</li>
+            <li>Each item's <code>cheated</code> bit is copied unchanged unless you clear it; new items are written with it clear, like a crafted item.</li>
+            <li>Only the inventory and skills sections are re-encoded. Apart from that one optional flag byte, the bytes before, between and after them are identical to the original.</li>
+            <li>The SHA-512 checksum is recomputed over the new payload.</li>
+            <li>The written file is re-parsed before it is handed back, and the result must match what you edited.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>Runeforge is an unofficial fan tool and is not affiliated with Iron Gate or Coffee Stain. Your file is processed locally in this tab only.</footer>
+
+  <div class="toast" id="toast" hidden></div>
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
