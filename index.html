@@ -7,7 +7,8 @@
   <meta name="description" content="Edit a Valheim 1.0 character (.fch) in your browser: inventory, item quality beyond the Forge of Potential cap, and skills. Nothing is uploaded; cheat flags are never touched.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <!-- Averia Serif Libre is the typeface Valheim itself uses for body text; Almendra SC stands in for its Norse display font. -->
+  <link href="https://fonts.googleapis.com/css2?family=Averia+Serif+Libre:wght@400;700&family=Almendra+SC&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%230f0d0b'/%3E%3Cpath d='M16 4l3 8 8 3-8 3-3 8-3-8-8-3 8-3z' fill='%23d9a74a'/%3E%3C/svg%3E">
 </head>
@@ -15,7 +16,7 @@
   <header class="topbar">
     <a class="brand" href="#" id="brand">
       <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M16 4l3 8 8 3-8 3-3 8-3-8-8-3 8-3z" fill="currentColor"/></svg>
-      RUNEFORGE
+      Runeforge
     </a>
     <div class="file-info" id="file-info" hidden>
       <span class="mono" id="file-name"></span>
@@ -111,7 +112,7 @@
           </div>
           <div class="grid" id="inv-grid"></div>
           <div class="legend">
-            <span><i style="background:var(--gold)"></i>quality</span>
+            <span><i style="background:var(--star)"></i>quality stars</span>
             <span><i style="background:var(--frost)"></i>quality beyond station max (Forge of Potential range)</span>
             <span><i style="background:var(--ok)"></i>equipped</span>
             <span><i style="background:var(--danger)"></i>marked as cheated by the game</span>
@@ -181,7 +182,7 @@
     </section>
   </main>
 
-  <footer>Runeforge is an unofficial fan tool and is not affiliated with Iron Gate or Coffee Stain. Your file is processed locally in this tab only.</footer>
+  <footer>Runeforge is an unofficial fan tool and is not affiliated with Iron Gate or Coffee Stain. Item icons are the game's own, via the <a href="https://valheim.wiki">Valheim Wiki</a>. Your file is processed locally in this tab only.</footer>
 
   <div class="toast" id="toast" hidden></div>
   <script type="module" src="js/app.js"></script>

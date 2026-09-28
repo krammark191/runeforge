@@ -77,11 +77,29 @@ Item record (v109): `i32 durability×100, u8 x, u8 y, u8 worldLevel, u8 flags, [
 Flag bits: `0x01` pickedUp · `0x02` equipped · `0x04` quality · `0x08` stack · `0x10` variant · `0x20` crafter ·
 `0x40` prefab · `0x80` customData. `extraFlags` bit 0 = cheated.
 
+## Item icons
+
+`assets/icons/<prefab>.png` are the game's own item icons, fetched from the [Valheim Wiki](https://valheim.wiki)
+(MediaWiki API on valheim.weirdgloop.org) by `tools/fetch_icons.py`. The script matches each prefab to a wiki
+page by display name, confirms the match against the infobox's Internal ID, falls back to a full-text search for
+the prefab, and downloads a 64px thumbnail. `data/icons.json` lists what was found; slots without an icon fall
+back to a type glyph. Re-run after a game update:
+
+```bash
+python3 tools/fetch_icons.py            # only fetches prefabs missing from data/icons.json
+python3 tools/fetch_icons.py --force    # refetch everything
+```
+
+The icons are Iron Gate's copyrighted assets, used here the same way the wiki uses them: as small identifying
+thumbnails in a free fan tool.
+
 ## Layout
 
 ```
 index.html          page shell
-css/style.css       theme (warm dark, gold + frost accents, Cinzel / Geist)
+css/style.css       theme modelled on the in-game UI (wood-framed panels, bevelled slots, Averia Serif Libre / Almendra SC)
+assets/icons/       item icons keyed by prefab (see "Item icons")
+tools/fetch_icons.py pulls icons from the Valheim Wiki into assets/icons + data/icons.json
 js/binary.js        LE reader/writer matching ZPackage / BinaryWriter
 js/fch.js           codec, splice-based serializer, stable hash, self-check
 js/items.js         item catalog (search, hash lookup, durability formula)
@@ -108,7 +126,8 @@ Item names, stack sizes, durability and quality caps come from
 [Domphill/Valheim-Save-Editor](https://github.com/Domphill/Valheim-Save-Editor) (MIT); the prefab hash table
 used to verify the hash port is from
 [ValterKane/ValhaimCheaterRemover](https://github.com/ValterKane/ValhaimCheaterRemover) (MIT). Format notes from
-[Lorcelmao/ValheimEditor](https://github.com/Lorcelmao/ValheimEditor). Visual direction inspired by
-[vikingeditor.com](https://vikingeditor.com).
+[Lorcelmao/ValheimEditor](https://github.com/Lorcelmao/ValheimEditor). Item icons via the
+[Valheim Wiki](https://valheim.wiki). The look follows Valheim's own menus; Averia Serif Libre is the game's
+body typeface.
 
 Unofficial fan tool. Not affiliated with Iron Gate or Coffee Stain.

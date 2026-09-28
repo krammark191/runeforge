@@ -4,13 +4,23 @@ import { stableHash } from './fch.js';
 let catalog = null;      // prefab → entry
 let byHash = null;       // int32 hash → prefab
 let searchIndex = null;  // [{prefab, name, lower}]
+let icons = {};          // prefab → relative icon path (from data/icons.json, fetched from valheim.wiki)
 
 export async function loadCatalog(url = new URL('../data/items.json', import.meta.url)) {
   const res = await fetch(url);
   if (!res.ok) throw new Error(`could not load item catalog (${res.status})`);
   const data = await res.json();
   setCatalog(data.items);
+  try {
+    const ir = await fetch(new URL('../data/icons.json', import.meta.url));
+    if (ir.ok) icons = await ir.json();
+  } catch { /* icons are optional; slots fall back to glyphs */ }
   return data;
+}
+
+export function iconFor(prefab) {
+  const rel = icons[prefab];
+  return rel ? new URL('../' + rel, import.meta.url).href : null;
 }
 
 export function setCatalog(items) {

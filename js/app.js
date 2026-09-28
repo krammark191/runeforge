@@ -1,5 +1,5 @@
 import { parseFch, serializeFch, inventoryRows, ITEM_FLAG, EXTRA_FLAG, SKILL_NAMES, STAT_CHEATS, VERSIONS, stableHash } from './fch.js';
-import { loadCatalog, lookupHash, search, maxDurabilityFor, hasQuality } from './items.js';
+import { loadCatalog, lookupHash, search, maxDurabilityFor, hasQuality, iconFor } from './items.js';
 import { demoFile } from './demo.js';
 
 const $ = (id) => document.getElementById(id);
@@ -65,6 +65,18 @@ function glyphOf(item) {
   const e = entryOf(item); const t = e?.type ?? 0;
   const map = { 3: '⚔', 14: '⚔', 22: '⚔', 4: '➶', 5: '⛨', 6: '⛑', 7: '🛡', 11: '👖', 12: '🧤', 17: '🧥', 19: '⚒', 15: '🔥', 13: '🏆', 2: '🍖', 9: '➹', 23: '➹', 21: '🐟', 24: '💍', 18: '✦', 1: '▪', 16: '◆', 10: '✂', 20: '✚' };
   return map[t] ?? '◆';
+}
+// Icon <img> with a glyph fallback if the file is missing or fails to load.
+function iconEl(entry, item, cls = 'icon') {
+  const src = entry ? iconFor(entry.prefab) : null;
+  if (!src) return el('span', { class: 'glyph' }, item ? glyphOf(item) : '◆');
+  const img = el('img', { class: cls, src, alt: '', loading: 'lazy', draggable: false });
+  img.addEventListener('error', () => img.replaceWith(el('span', { class: 'glyph' }, item ? glyphOf(item) : '◆')), { once: true });
+  return img;
+}
+function starsText(q, max) {
+  // The game draws one small star per level; past 5 that stops being readable, so show a count instead.
+  return q <= 5 ? '★'.repeat(q) : `${q}★`;
 }
 function fmtDate(unixSeconds) { try { return new Date(Number(unixSeconds) * 1000).toLocaleDateString(); } catch { return String(unixSeconds); } }
 function fmtDur(s) { s = Math.round(Number(s)); const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60); return h ? `${h}h ${m}m` : `${m}m`; }
@@ -133,11 +145,13 @@ function renderGrid() {
     const slot = el('div', { class: `slot ${it ? '' : 'empty'} ${state.selected && state.selected.x === x && state.selected.y === y ? 'selected' : ''}`, 'data-x': x, 'data-y': y, draggable: !!it, title: it ? nameOf(it) : `Empty slot ${x + 1},${y + 1}` });
     if (it) {
       const e = entryOf(it);
-      slot.append(el('span', { class: 'glyph' }, glyphOf(it)), el('span', { class: 'name' }, nameOf(it)));
+      const icon = iconEl(e, it);
+      slot.append(icon);
+      if (icon.tagName !== 'IMG') slot.append(el('span', { class: 'name' }, nameOf(it)));
       if (it.stack > 1) slot.append(el('span', { class: 'stack' }, it.stack));
       if (it.quality > 1 || hasQuality(e)) {
         const forge = e && it.quality > e.maxQuality;
-        slot.append(el('span', { class: `quality ${forge ? 'forge' : ''}` }, `★${it.quality}`));
+        slot.append(el('span', { class: `quality ${forge ? 'forge' : ''}`, title: `quality ${it.quality}` }, starsText(it.quality)));
       }
       if (it.flags & ITEM_FLAG.EQUIPPED) slot.append(el('span', { class: 'equipped', title: 'equipped' }));
       if (it.extraFlags & EXTRA_FLAG.CHEATED) slot.append(el('span', { class: 'cheated', title: 'marked as cheated by the game' }));
@@ -195,7 +209,9 @@ function renderDetail() {
   const field = (label, ...value) => el('div', { class: 'field' }, el('label', {}, label), el('div', { class: 'value' }, ...value));
   const numInput = (value, opts, onchange) => el('input', { type: 'number', value, disabled: !editable, ...opts, onchange: (ev) => onchange(ev.target.valueAsNumber) });
 
-  box.append(el('div', { class: 'panel-head' }, el('h2', {}, nameOf(it)), el('span', { class: 'badge' }, e ? e.typeName : 'unknown prefab')));
+  box.append(el('div', { class: 'panel-head' },
+    el('div', { class: 'item-title' }, el('span', { class: 'thumb' }, iconEl(e, it, '')), el('h2', {}, nameOf(it))),
+    el('span', { class: 'badge' }, e ? e.typeName : 'unknown prefab')));
   box.append(el('p', { class: 'hint mono' }, e ? e.prefab : `hash ${it.prefabHash}`));
 
   // ---- quality box
@@ -310,7 +326,8 @@ function renderSearch() {
   box.hidden = res.length === 0;
   for (const e of res) {
     box.append(el('div', { class: 'result', onclick: () => addItem(e) },
-      el('div', {}, el('div', {}, e.name), el('div', { class: 'prefab' }, e.prefab)),
+      el('span', { class: 'thumb' }, iconEl(e, null, '')),
+      el('div', { class: 'grow' }, el('div', {}, e.name), el('div', { class: 'prefab' }, e.prefab)),
       el('div', { class: 'type' }, e.maxQuality > 1 ? `${e.typeName} · ★${e.maxQuality}` : e.typeName)));
   }
 }
